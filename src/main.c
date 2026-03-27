@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include "memory.h"
 
 int main()
 {
-    printf("Mini memory manager launched!\n");
+    init_memory();
+    print_memory();
+
     return 0;
 }
