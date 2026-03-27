@@ -34,3 +34,30 @@ void print_memory(){
     }
 
 }
+
+void* my_malloc(size_t size){
+
+    Block* current = head;
+
+    while(current!=NULL)
+    {
+        if(current->size >= size+sizeof(Block)) {
+            
+            Block* new_block = (Block*)((char*)(current+1)+size);
+            new_block->size = current->size - size - sizeof(Block);
+            new_block->free = 1;
+            new_block->next = current->next;
+
+            current->size = size;
+            current->next = new_block;
+
+        }
+        current->free = 0;
+
+        return (void*)(current+1);
+
+    }
+    
+    
+
+}
