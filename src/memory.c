@@ -91,3 +91,45 @@ void merge_free_blocks()
 
 
 }
+
+void print_memory_visual()
+{
+    Block* current = head;
+    printf("Heap layout: \n");
+
+    while(current != NULL)
+    {
+        printf("[H][%s:%zu]", current->free ? "FREE" : "USED", current->size);
+
+        current=current->next;
+    }
+    printf("\n");
+}
+
+void print_memory_bar_advanced() {
+    Block* current = head;
+
+    printf("\nHeap layout (advanced view):\n");
+
+    // status print (USED/FREE)
+    while(current != NULL) {
+        printf("[H:%s]", current->free ? "FREE" : "USED");
+        current = current->next;
+    }
+    printf("\n");
+
+    current = head;
+    while(current != NULL) {
+        int bar_length = current->size / 10; 
+        if(bar_length == 0) bar_length = 1;
+
+        char c = current->free ? '-' : '#';
+        printf("  "); 
+        for(int i = 0; i < bar_length; i++) {
+            printf("%c", c);
+        }
+
+        current = current->next;
+    }
+    printf("\n\n");
+}

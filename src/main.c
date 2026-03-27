@@ -9,12 +9,13 @@ int main()
     void* a = my_malloc(100);
     void* b = my_malloc(50);
 
-    print_memory();
+    print_memory_bar_advanced();
 
-    printf("FREEING FIRST BLOCK...\n");
+    printf("\n...FREEING FIRST BLOCK...\n");
 
     my_free(a);
-    print_memory();
+    my_free(b);
+    print_memory_bar_advanced();
 
     return 0;
 }
