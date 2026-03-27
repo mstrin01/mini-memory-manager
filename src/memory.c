@@ -61,3 +61,33 @@ void* my_malloc(size_t size){
     
 
 }
+
+void my_free(void* ptr)
+{
+    if(ptr==NULL) return;
+
+    Block* block = (Block*)ptr-1;
+    block->free = 1;
+
+    merge_free_blocks();
+}
+
+void merge_free_blocks()
+{
+    Block* current = head;
+
+    while(current != NULL && current->next!=NULL)
+    {
+        if(current->free && current->next->free)
+        {
+            current->size += sizeof(Block) + current->next->size;
+            current->next = current->next->next;
+        }
+        else
+        {
+            current = current->next;
+        }
+    }
+
+
+}
