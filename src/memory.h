@@ -1,12 +1,14 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <stddef.h>
+
 void init_memory();
-void print_memory();
-void* my_malloc(size_t size);
+void print_memory_debug();
+void* my_malloc(size_t);
+void* my_realloc(void* ptr, size_t new_size );
 void my_free(void* ptr);
 void merge_free_blocks();
-void print_memory_visual();
-void print_memory_bar_advanced();
+int count_headers();
 
 #endif

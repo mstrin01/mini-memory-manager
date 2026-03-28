@@ -1,135 +1,123 @@
 #include <stdio.h>
-#include "memory.h"
+#include <stdlib.h>
+#include <stddef.h>
+#include <string.h>
 
 #define HEAP_SIZE 1024
 
-static char heap[HEAP_SIZE];
-
-typedef struct Block{
-    size_t size; //size of data in bytes
-    int free; //if free 1, if used 0
+typedef struct Block {
+    size_t size;
+    int free;            // 1 = free, 0 = used
     struct Block* next;
-}Block;
+} Block;
 
+static char heap[HEAP_SIZE];
 static Block* head = NULL;
 
-void init_memory(){
-
+// ===== INIT HEAP =====
+void init_memory() {
     head = (Block*)heap;
-    head->size = HEAP_SIZE - sizeof(Block); // [BLOCK][DATA] block is not used for data
+    head->size = HEAP_SIZE - sizeof(Block);
     head->free = 1;
     head->next = NULL;
-
-    printf("Heap initialized. Size: %d bytes\n",HEAP_SIZE);
-
 }
 
-void print_memory(){
+// ===== COUNT HEADERS =====
+size_t count_headers() {
     Block* current = head;
-    
-    while(current!=NULL){
-        printf("Block size: %zu | %s \n", current->size, current->free ? "FREE" : "USED");
-
-        current=current->next;
+    size_t total = 0;
+    while(current) {
+        total += sizeof(Block);
+        current = current->next;
     }
-
+    return total;
 }
 
-void* my_malloc(size_t size){
-
+// ===== PRINT HEAP DEBUG =====
+void print_memory_debug() {
     Block* current = head;
+    size_t total_used = 0;
+    size_t total_free = 0;
 
-    while(current!=NULL)
-    {
-        if(current->size >= size+sizeof(Block)) {
-            
-            Block* new_block = (Block*)((char*)(current+1)+size);
-            new_block->size = current->size - size - sizeof(Block);
-            new_block->free = 1;
-            new_block->next = current->next;
+    printf("\n=== HEAP STATE ===\n");
 
-            current->size = size;
-            current->next = new_block;
+    while(current) {
+        void* header_addr = (void*)current;
+        void* data_addr = (void*)(current + 1);
+        void* end_addr = (void*)((char*)data_addr + current->size);
 
-        }
-        current->free = 0;
+        printf("[0x%p - 0x%p] HEADER | size=%zu | %s | data_start=0x%p\n",
+               header_addr, end_addr, current->size,
+               current->free ? "FREE" : "USED",
+               data_addr);
 
-        return (void*)(current+1);
-
-    }
-    
-    
-
-}
-
-void my_free(void* ptr)
-{
-    if(ptr==NULL) return;
-
-    Block* block = (Block*)ptr-1;
-    block->free = 1;
-
-    merge_free_blocks();
-}
-
-void merge_free_blocks()
-{
-    Block* current = head;
-
-    while(current != NULL && current->next!=NULL)
-    {
-        if(current->free && current->next->free)
-        {
-            current->size += sizeof(Block) + current->next->size;
-            current->next = current->next->next;
-        }
+        if(current->free)
+            total_free += current->size;
         else
-        {
-            current = current->next;
-        }
-    }
-
-
-}
-
-void print_memory_visual()
-{
-    Block* current = head;
-    printf("Heap layout: \n");
-
-    while(current != NULL)
-    {
-        printf("[H][%s:%zu]", current->free ? "FREE" : "USED", current->size);
-
-        current=current->next;
-    }
-    printf("\n");
-}
-
-void print_memory_bar_advanced() {
-    Block* current = head;
-
-    printf("\nHeap layout (advanced view):\n");
-
-    // status print (USED/FREE)
-    while(current != NULL) {
-        printf("[H:%s]", current->free ? "FREE" : "USED");
-        current = current->next;
-    }
-    printf("\n");
-
-    current = head;
-    while(current != NULL) {
-        int bar_length = current->size / 10; 
-        if(bar_length == 0) bar_length = 1;
-
-        char c = current->free ? '-' : '#';
-        printf("  "); 
-        for(int i = 0; i < bar_length; i++) {
-            printf("%c", c);
-        }
+            total_used += current->size;
 
         current = current->next;
     }
-    printf("\n\n");
+
+    printf("\nTOTAL: %zu | USED: %zu | FREE: %zu\n\n",
+           total_used + total_free + count_headers(),
+           total_used,
+           total_free);
+}
+
+// ===== MALLOC =====
+void* my_malloc(size_t size) {
+    Block* current = head;
+
+    while(current) {
+        if(current->free && current->size >= size) {
+            if(current->size >= size + sizeof(Block) + 1) {
+                Block* new_block = (Block*)((char*)(current + 1) + size);
+                new_block->size = current->size - size - sizeof(Block);
+                new_block->free = 1;
+                new_block->next = current->next;
+
+                current->size = size;
+                current->next = new_block;
+            }
+            current->free = 0;
+            return (void*)(current + 1);
+        }
+        current = current->next;
+    }
+    return NULL; // nema dovoljno memorije
+}
+
+// ===== FREE =====
+void my_free(void* ptr) {
+    if(!ptr) return;
+
+    Block* block_ptr = (Block*)ptr - 1;
+    block_ptr->free = 1;
+
+    // merge sa sljedećim blokom ako je slobodan
+    if(block_ptr->next && block_ptr->next->free) {
+        block_ptr->size += sizeof(Block) + block_ptr->next->size;
+        block_ptr->next = block_ptr->next->next;
+    }
+}
+
+// ===== REALLOC =====
+void* my_realloc(void* ptr, size_t new_size) {
+    if(!ptr) return my_malloc(new_size);
+
+    Block* block_ptr = (Block*)ptr - 1;
+
+    if(block_ptr->size >= new_size) {
+        // trenutno block već dovoljno velik
+        return ptr;
+    } else {
+        // alociraj novi block i kopiraj
+        void* new_ptr = my_malloc(new_size);
+        if(!new_ptr) return NULL;
+
+        memcpy(new_ptr, ptr, block_ptr->size);
+        my_free(ptr);
+        return new_ptr;
+    }
 }
