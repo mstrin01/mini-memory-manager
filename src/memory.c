@@ -121,3 +121,55 @@ void* my_realloc(void* ptr, size_t new_size) {
         return new_ptr;
     }
 }
+
+// ===== PRINT STATS =====
+void print_stats(){
+
+    Block* current = head;
+    
+    size_t used = 0;
+    size_t free_mem = 0;
+    size_t largest_free = 0;
+
+    int total_blocks = 0;
+    int free_blocks = 0;
+    int used_blocks = 0;
+
+    while(current != NULL)
+    {
+        total_blocks++;
+
+        if(current->free)
+        {
+            free_blocks++;
+            free_mem += current->size;
+
+            if(current->size > largest_free)
+            {
+                largest_free = current->size;
+            }
+        }
+        else{
+            used_blocks++;
+            used += current->size;
+        }
+
+        current = current->next;
+    }
+
+    double fragmentation = 0.0;
+
+    if(free_mem > 0){
+        fragmentation = 100.0 * (1.0 - ((double)largest_free/free_mem));
+    }
+
+    printf("\n=== MEMORY STATS ===\n");
+    printf("Total heap: 1024 bytes\n");
+    printf("Used memory: %zu bytes\n",used);
+    printf("Free memory: %zu bytes\n",free_mem);
+    printf("Total blocks: %d\n",total_blocks);
+    printf("Used blocks: %d\n",used_blocks);
+    printf("Free blocks: %d\n",free_blocks);
+    printf("Largest free block: %zu bytes\n",largest_free);
+    printf("Fragmentation: %.2f%%\n\n",fragmentation);
+}

@@ -10,5 +10,6 @@ void* my_realloc(void* ptr, size_t new_size );
 void my_free(void* ptr);
 void merge_free_blocks();
 int count_headers();
+void print_stats();
 
 #endif

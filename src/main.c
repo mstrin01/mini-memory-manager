@@ -12,8 +12,9 @@ void menu() {
     printf("2. FREE\n");
     printf("3. PRINT HEAP\n");
     printf("4. REALLOC\n");
-    printf("5. EXIT\n");
-    printf("Choose an option from 1 - 5: ");
+    printf("5. PRINT STATS\n");
+    printf("6. EXIT\n");
+    printf("Choose an option from 1 - 6: ");
 }
 
 int main() {
@@ -75,13 +76,16 @@ int main() {
                 printf("Invalid index.\n\n");
             }
 
-        } else if(choice == 5) { // EXIT
+        } else if(choice == 5){ //PRINT STATS
+            print_stats();
+
+        }else if(choice == 6) { // EXIT
             printf("Exiting...\n");
         } else {
             printf("Invalid choice.\n\n");
         }
 
-    } while(choice != 5);
+    } while(choice != 6);
 
     return 0;
 }
